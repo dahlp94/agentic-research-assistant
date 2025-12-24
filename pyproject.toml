@@ -1,0 +1,32 @@
+[project]
+name = "ara"
+version = "0.1.0"
+description = "Agentic Research & Decision Assistant (LangGraph) — Applied AI Engineer portfolio project"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "pydantic>=2.6",
+  "python-dotenv>=1.0",
+  "httpx>=0.27",
+
+  "langchain>=0.2.14",
+  "langchain-openai>=0.1.20",
+  "langgraph>=0.2.30",
+
+  "tiktoken>=0.7.0",
+  "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

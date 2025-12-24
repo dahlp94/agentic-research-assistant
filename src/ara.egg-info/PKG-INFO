@@ -1,0 +1,18 @@
+Metadata-Version: 2.4
+Name: ara
+Version: 0.1.0
+Summary: Agentic Research & Decision Assistant (LangGraph) — Applied AI Engineer portfolio project
+Requires-Python: >=3.10
+Requires-Dist: fastapi>=0.110
+Requires-Dist: uvicorn[standard]>=0.27
+Requires-Dist: pydantic>=2.6
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: httpx>=0.27
+Requires-Dist: langchain>=0.2.14
+Requires-Dist: langchain-openai>=0.1.20
+Requires-Dist: langgraph>=0.2.30
+Requires-Dist: tiktoken>=0.7.0
+Requires-Dist: rich>=13.7.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: ruff>=0.6.0; extra == "dev"
