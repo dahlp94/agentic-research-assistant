@@ -1,23 +1,45 @@
 # Agentic Research & Decision Assistant (LangGraph)
 
-A **production-oriented multi-agent AI system** that performs structured research and decision-making using explicit orchestration, safety checks, and traceable outputs.
+A **production-oriented multi-agent AI system** for structured research and decision-making, built with explicit orchestration, safety checks, and traceable outputs.
 
-This project is designed as an **Applied AI Engineer portfolio artifact**, emphasizing **reliability, debuggability, and system design** over prompt-only demos.
+This project is designed as an **Applied AI Engineer portfolio artifact**, emphasizing **reliability, debuggability, and ownership of outcomes** over prompt-only demos.
 
----
 
-## 🔍 What This System Does
+## 🔍 Problem Statement
 
-Given an open-ended task (for example: *“Compare X vs Y and recommend one”*), the system runs a **multi-agent workflow**:
+Teams increasingly rely on LLMs for research and decision-making, but most agent-based systems:
 
-* **Planner** — decomposes the task into research questions, deliverables, and a rubric
+* hallucinate confidently when evidence is weak
+* lack traceability into intermediate reasoning
+* fail silently or unpredictably
+* are difficult to debug or evaluate
+
+**This project explores how explicit agent orchestration, validation, and failure modes can make LLM-based decision systems safer and more production-ready.**
+
+
+## 🧪 Product Hypotheses
+
+This system is built around a set of testable hypotheses:
+
+1. **Structured multi-agent workflows reduce hallucinations** compared to single-agent prompting.
+2. **Explicit validation and failure modes improve trust** over fluent but unsupported answers.
+3. **Tool and evidence quality dominate model size** for decision quality in research tasks.
+4. **Inspectable intermediate state enables faster iteration and debugging** in agent systems.
+
+The architecture and planned evaluations are designed to validate these hypotheses incrementally.
+
+
+## 🔁 What This System Does
+
+Given an open-ended task (for example: *“Compare X vs Y and recommend one”*), the system executes a **multi-agent workflow**:
+
+* **Planner** — decomposes the task into research questions, deliverables, evaluation rubric, and risks
 * **Researcher** — gathers evidence and produces structured claims with citations
-* **Critic** — checks for unsupported claims, weak evidence, missing counterarguments, and unclear assumptions
+* **Critic** — validates evidence quality, flags unsupported claims, missing counterarguments, and unclear assumptions
 * **Decider** — synthesizes a final recommendation with tradeoffs, confidence, and next steps
 
 The system is intentionally **safety-first**: when evidence is insufficient, it lowers confidence or requests additional research instead of hallucinating.
 
----
 
 ## 🧠 Why LangGraph?
 
@@ -28,11 +50,10 @@ This enables:
 * bounded retry loops (no runaway agents)
 * deterministic routing logic
 * inspectable intermediate state
-* clean separation between agents
+* clean separation between agent roles
 
-These properties are critical for **production agent systems**.
+These properties are critical for **production-grade agent systems**, where reliability and control matter more than raw fluency.
 
----
 
 ## 🏗️ Architecture (High Level)
 
@@ -53,13 +74,12 @@ Decider
   (recommendation, tradeoffs, confidence)
    ↓
 Artifacts
-  - JSON trace (full execution state)
+  - JSON execution trace (full state)
   - Markdown report (user-facing output)
 ```
 
-All agents operate over a **shared typed state**, making execution traceable and debuggable.
+All agents operate over a **shared, typed state**, making execution fully traceable and debuggable.
 
----
 
 ## 📁 Repository Structure
 
@@ -73,25 +93,9 @@ agentic-research-assistant/
 ├── src/
 │   └── ara/
 │       ├── api/                 # FastAPI service layer
-│       │   ├── app.py
-│       │   └── schemas.py
-│       │
 │       ├── agents/              # Role-specialized agents
-│       │   ├── planner.py
-│       │   ├── researcher.py
-│       │   ├── critic.py
-│       │   └── decider.py
-│       │
-│       ├── core/                # Orchestration & shared logic
-│       │   ├── state.py         # Typed shared state (Pydantic)
-│       │   ├── runner.py        # LangGraph wiring & execution
-│       │   ├── policies.py      # Retry & safety policies
-│       │   └── tracing.py       # Artifact persistence
-│       │
+│       ├── core/                # Orchestration, state, policies
 │       ├── tools/               # External tool interfaces
-│       │   ├── web_search.py
-│       │   └── citations.py
-│       │
 │       └── __init__.py
 │
 ├── scripts/
@@ -104,9 +108,8 @@ agentic-research-assistant/
     └── test_state_machine.py
 ```
 
-This structure separates **agent logic**, **orchestration**, and **infrastructure concerns**, making the system easier to extend, test, and reason about as complexity grows.
+This structure cleanly separates **agent logic**, **control flow**, and **infrastructure concerns**, enabling incremental extension as the system grows.
 
----
 
 ## 🚀 Quickstart
 
@@ -131,59 +134,31 @@ POST `/run`:
 }
 ```
 
-Artifacts are written to `outputs/sample_runs/` as JSON and Markdown files.
+Each run produces **auditable artifacts** in `outputs/sample_runs/`.
 
----
 
 ## 🛡️ Safety & Reliability Features
 
 * **Typed shared state** (Pydantic)
 * **Critic-driven validation** of evidence quality
-* **Bounded retry loops** to prevent infinite agent cycles
 * **Explicit failure modes** when evidence is insufficient
+* **Bounded retry loops** to prevent infinite agent cycles
 * **Deterministic artifacts** for auditing and debugging
 
-This mirrors real-world constraints in enterprise AI systems.
+These design choices reflect real-world constraints in enterprise AI systems.
 
----
 
-## 🧩 Design Decisions
+## 🧩 Key Design Decisions
 
-This project prioritizes **reliability, observability, and controlled execution** over raw generation quality.
+This project prioritizes **controlled execution and observability** over raw generation quality.
 
-### 1️⃣ Explicit Agent Roles vs. Single “Super-Agent”
+* **Explicit agent roles** improve debuggability and isolate failures
+* **LangGraph orchestration** enables deterministic routing and bounded retries
+* **Typed shared state** prevents schema drift and supports validation
+* **Critic agent** enforces evidence quality and reduces hallucinations
+* **Artifact-first outputs** enable offline evaluation and inspection
+* **Safety over fluency**: low confidence is preferred to unsupported certainty
 
-Separate Planner, Researcher, Critic, and Decider agents improve debuggability and localize failures at the cost of additional orchestration complexity.
-
-### 2️⃣ LangGraph for Orchestration
-
-Agent execution is modeled as an explicit graph/state machine to enable deterministic routing, bounded retries, and inspectable control flow.
-
-### 3️⃣ Typed Shared State (Pydantic)
-
-All agents read/write to a structured state object, preventing schema drift and enabling artifact persistence and validation.
-
-### 4️⃣ Critic-Driven Validation
-
-A dedicated Critic agent enforces evidence quality and can halt or redirect execution, reducing hallucinations.
-
-### 5️⃣ Bounded Retry Loops
-
-Critique → research cycles are explicitly limited to ensure predictable execution and bounded cost.
-
-### 6️⃣ Artifact-First Outputs
-
-Every run produces a full JSON execution trace and a user-facing Markdown report for transparency and debugging.
-
-### 7️⃣ Placeholder Tooling Before Optimization
-
-Tooling is stubbed initially to validate control flow before integrating real data sources.
-
-### 8️⃣ Safety Over Fluency
-
-The system prefers low-confidence or insufficient-evidence outputs over confident but unsupported answers.
-
----
 
 ## 📦 Project Status
 
@@ -192,41 +167,29 @@ The system prefers low-confidence or insufficient-evidence outputs over confiden
 * Planner → Researcher → Critic → Decider pipeline
 * LangGraph orchestration with conditional routing
 * CLI + FastAPI interface
-* Run artifacts (JSON + Markdown)
+* Full execution artifacts (JSON + Markdown)
 * Safe failure behavior
 
 **Planned / In Progress**
 
-* Real web search integration (Tavily / Bing / SerpAPI)
+* Real web search integration
 * Citation quality scoring
 * Cost & latency tracking per agent
 * Offline evaluation harness
 * Caching and model routing
 
----
 
-## 🧪 Development Notes
+## 🎯 Intended Audience
 
-* Web search is currently stubbed.
-* The Critic correctly flags placeholder citations.
-* This behavior is intentional and demonstrates safe defaults.
-
----
-
-## 🎯 Who This Is For
-
-This project is intended to demonstrate skills relevant to:
+This project is designed to demonstrate skills relevant to:
 
 * Applied AI Engineer
 * LLM Platform Engineer
 * Agentic Systems Engineer
 
-It focuses on **system design, safety, and reliability**, not prompt hacking.
+It emphasizes **system design, reliability, and ownership**, not prompt hacking.
 
----
 
 ## 📌 Key Takeaway
 
-> This repository demonstrates how to build **agentic AI systems that are safe, inspectable, and production-ready**, rather than brittle prompt pipelines.
-
----
+> This repository demonstrates how to move from an ambiguous problem to a **production-oriented agentic AI system** by forming testable hypotheses, validating behavior early, and iterating toward reliable, inspectable outcomes.
